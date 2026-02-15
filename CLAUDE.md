@@ -13,7 +13,7 @@ Dedicated Supabase database server for the **Gerege AI Ecosystem**. This is the 
 ```
 Internet
     │
-    ├─ HTTPS ──→ Nginx (SSL termination)
+    ├─ HTTPS ──→ Nginx (SSL termination at supabase.gerege.mn)
     │                │
     │                ├─ /auth/v1/*     ──→ Kong ──→ GoTrue (Auth)
     │                ├─ /rest/v1/*     ──→ Kong ──→ PostgREST (REST API)
@@ -21,8 +21,9 @@ Internet
     │                ├─ /storage/v1/*  ──→ Kong ──→ Storage API
     │                └─ /*             ──→ Kong ──→ Studio (Dashboard)
     │
-    └─ TCP 5432 ──→ Supavisor (Connection Pooler) ──→ PostgreSQL 15
-       (firewalled)
+    ├─ TCP 5433 ──→ PostgreSQL 15 (direct, firewalled to ALLOWED_DB_IPS)
+    ├─ TCP 5432 ──→ Supavisor (session mode, firewalled)
+    └─ TCP 6543 ──→ Supavisor (transaction mode, firewalled)
 ```
 
 ## Database Schemas
@@ -77,24 +78,53 @@ bash scripts/db-status.sh
 
 ## Ports
 
-| Port | Service          | Access                  |
-|------|------------------|-------------------------|
-| 22   | SSH              | Public                  |
-| 80   | HTTP             | Public (redirects HTTPS)|
-| 443  | HTTPS (Nginx)    | Public                  |
-| 3000 | Studio           | Internal (via Kong)     |
-| 5432 | PostgreSQL       | Firewalled (ALLOWED_DB_IPS only) |
-| 6543 | Supavisor (transaction mode) | Firewalled    |
-| 8000 | Kong API Gateway | Public (via Nginx)      |
+| Port | Service | Access |
+|------|---------|--------|
+| 22 | SSH | Public |
+| 80 | HTTP | Public (301 → HTTPS) |
+| 443 | HTTPS (Nginx) | Public — SSL via Let's Encrypt |
+| 3000 | Studio | Internal (proxied via Kong) |
+| 5432 | Supavisor (session mode) | Firewalled to `ALLOWED_DB_IPS` |
+| 5433 | PostgreSQL direct | Firewalled to `ALLOWED_DB_IPS` |
+| 6543 | Supavisor (transaction mode) | Firewalled to `ALLOWED_DB_IPS` |
+| 8000 | Kong API Gateway | Public (proxied via Nginx) |
+
+## Firewall (UFW)
+
+Managed by `scripts/firewall-setup.sh`. Default policy: deny incoming, allow outgoing.
+
+**Public access:**
+- SSH (22), HTTP (80), HTTPS (443), Kong (8000)
+
+**Restricted to `ALLOWED_DB_IPS` only:**
+- PostgreSQL direct (5433)
+- Supavisor session (5432) and transaction (6543)
+
+Currently allowed IPs (set in `.env`):
+- `38.180.251.84` — elite-gerege server
+- `150.228.176.233` — admin
+
+To add a new IP:
+```bash
+# 1. Edit .env
+nano .env  # add IP to ALLOWED_DB_IPS
+
+# 2. Add UFW rules
+ufw allow from NEW_IP to any port 5433 proto tcp comment 'PostgreSQL direct'
+ufw allow from NEW_IP to any port 5432 proto tcp comment 'Supavisor session'
+ufw allow from NEW_IP to any port 6543 proto tcp comment 'Supavisor transaction'
+```
 
 ## Security
 
 - All API traffic routed through Kong with JWT authentication
-- PostgreSQL port (5432) firewalled — only allowed IPs can connect
+- Studio dashboard protected by basic auth (credentials in `.env`)
+- PostgreSQL ports (5432/5433/6543) firewalled — only `ALLOWED_DB_IPS` can connect
+- SSL terminated at Nginx with Let's Encrypt (auto-renew via certbot timer)
+- TLS 1.2+ with HSTS enabled
 - TOTP secrets encrypted with AES-256-GCM at application level
 - Recovery codes stored as SHA-256 hashes
 - Row Level Security (RLS) enabled on all custom tables
-- SSL terminated at Nginx with TLS 1.2+ and HSTS
 
 ## Key Files
 
@@ -108,14 +138,29 @@ bash scripts/db-status.sh
 ## Connecting from Other Services
 
 ```bash
-# Direct connection (from allowed IPs only)
-psql "postgresql://postgres:PASSWORD@supabase.gerege.mn:5432/postgres"
+# Direct PostgreSQL connection (from allowed IPs only, port 5433)
+psql "postgresql://supabase_admin:PASSWORD@38.180.242.174:5433/postgres"
 
-# Via Supavisor (transaction pooling)
-psql "postgresql://postgres:PASSWORD@supabase.gerege.mn:6543/postgres"
+# From elite-gerege (38.180.251.84):
+PGPASSWORD=PASSWORD psql -h 38.180.242.174 -p 5433 -U supabase_admin -d postgres
 
-# REST API
+# Via Supavisor transaction pooling (port 6543)
+psql "postgresql://supabase_admin:PASSWORD@38.180.242.174:6543/postgres"
+
+# REST API (from anywhere, requires API key)
 curl https://supabase.gerege.mn/rest/v1/users \
   -H "apikey: ANON_KEY" \
   -H "Authorization: Bearer ANON_KEY"
+
+# Auth API
+curl https://supabase.gerege.mn/auth/v1/health \
+  -H "apikey: ANON_KEY"
 ```
+
+## Nginx / SSL
+
+- Config: `/etc/nginx/sites-available/supabase.gerege.mn`
+- Certificate: `/etc/letsencrypt/live/supabase.gerege.mn/`
+- Auto-renewal: certbot systemd timer (runs twice daily)
+- Proxies all HTTPS traffic to Kong on port 8000
+- WebSocket upgrade headers configured for Realtime
