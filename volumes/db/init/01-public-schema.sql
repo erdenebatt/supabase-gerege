@@ -151,44 +151,57 @@ ALTER TABLE public.mfa_recovery_codes ENABLE ROW LEVEL SECURITY;
 -- Users can read their own profile
 CREATE POLICY "Users can view own profile"
     ON public.users FOR SELECT
-    USING (auth.uid() = auth_user_id);
+    TO anon, authenticated
+    USING ((select auth.uid()) = auth_user_id);
 
 -- Users can update their own profile
 CREATE POLICY "Users can update own profile"
     ON public.users FOR UPDATE
-    USING (auth.uid() = auth_user_id);
+    TO authenticated
+    USING ((select auth.uid()) = auth_user_id)
+    WITH CHECK ((select auth.uid()) = auth_user_id);
 
--- Service role has full access
+-- Service role has full access (targeted to service_role to avoid multiple_permissive_policies)
 CREATE POLICY "Service role has full access to users"
     ON public.users FOR ALL
-    USING (auth.role() = 'service_role');
+    TO service_role
+    USING (true) WITH CHECK (true);
 
 -- MFA settings: users can manage their own
 CREATE POLICY "Users can manage own MFA settings"
     ON public.user_mfa_settings FOR ALL
-    USING (user_id IN (SELECT id FROM public.users WHERE auth_user_id = auth.uid()));
+    TO authenticated
+    USING (user_id IN (SELECT id FROM public.users WHERE auth_user_id = (select auth.uid())))
+    WITH CHECK (user_id IN (SELECT id FROM public.users WHERE auth_user_id = (select auth.uid())));
 
 CREATE POLICY "Service role has full access to MFA settings"
     ON public.user_mfa_settings FOR ALL
-    USING (auth.role() = 'service_role');
+    TO service_role
+    USING (true) WITH CHECK (true);
 
 -- TOTP: users can manage their own
 CREATE POLICY "Users can manage own TOTP"
     ON public.user_totp FOR ALL
-    USING (user_id IN (SELECT id FROM public.users WHERE auth_user_id = auth.uid()));
+    TO authenticated
+    USING (user_id IN (SELECT id FROM public.users WHERE auth_user_id = (select auth.uid())))
+    WITH CHECK (user_id IN (SELECT id FROM public.users WHERE auth_user_id = (select auth.uid())));
 
 CREATE POLICY "Service role has full access to TOTP"
     ON public.user_totp FOR ALL
-    USING (auth.role() = 'service_role');
+    TO service_role
+    USING (true) WITH CHECK (true);
 
 -- Recovery codes: users can manage their own
 CREATE POLICY "Users can manage own recovery codes"
     ON public.mfa_recovery_codes FOR ALL
-    USING (user_id IN (SELECT id FROM public.users WHERE auth_user_id = auth.uid()));
+    TO authenticated
+    USING (user_id IN (SELECT id FROM public.users WHERE auth_user_id = (select auth.uid())))
+    WITH CHECK (user_id IN (SELECT id FROM public.users WHERE auth_user_id = (select auth.uid())));
 
 CREATE POLICY "Service role has full access to recovery codes"
     ON public.mfa_recovery_codes FOR ALL
-    USING (auth.role() = 'service_role');
+    TO service_role
+    USING (true) WITH CHECK (true);
 
 
 -- ─── Grants ──────────────────────────────────────────────────

@@ -107,22 +107,26 @@ ALTER TABLE gesign.signing_logs ENABLE ROW LEVEL SECURITY;
 -- Users can view their own certificates
 CREATE POLICY "Users can view own certificates"
     ON gesign.certificates FOR SELECT
-    USING (user_id IN (SELECT id FROM public.users WHERE auth_user_id = auth.uid()));
+    TO anon, authenticated
+    USING (user_id IN (SELECT id FROM public.users WHERE auth_user_id = (select auth.uid())));
 
 -- Service role has full access
 CREATE POLICY "Service role has full access to certificates"
     ON gesign.certificates FOR ALL
-    USING (auth.role() = 'service_role');
+    TO service_role
+    USING (true) WITH CHECK (true);
 
 -- Users can view their own signing logs
 CREATE POLICY "Users can view own signing logs"
     ON gesign.signing_logs FOR SELECT
-    USING (user_id IN (SELECT id FROM public.users WHERE auth_user_id = auth.uid()));
+    TO anon, authenticated
+    USING (user_id IN (SELECT id FROM public.users WHERE auth_user_id = (select auth.uid())));
 
 -- Service role has full access to signing logs
 CREATE POLICY "Service role has full access to signing logs"
     ON gesign.signing_logs FOR ALL
-    USING (auth.role() = 'service_role');
+    TO service_role
+    USING (true) WITH CHECK (true);
 
 
 -- ─── Grants ──────────────────────────────────────────────────

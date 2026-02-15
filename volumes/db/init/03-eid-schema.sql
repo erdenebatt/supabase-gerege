@@ -123,22 +123,26 @@ ALTER TABLE eid.verification_logs ENABLE ROW LEVEL SECURITY;
 -- Users can view their own national ID metadata
 CREATE POLICY "Users can view own national ID"
     ON eid.national_id_metadata FOR SELECT
-    USING (user_id IN (SELECT id FROM public.users WHERE auth_user_id = auth.uid()));
+    TO anon, authenticated
+    USING (user_id IN (SELECT id FROM public.users WHERE auth_user_id = (select auth.uid())));
 
 -- Service role has full access
 CREATE POLICY "Service role has full access to national ID"
     ON eid.national_id_metadata FOR ALL
-    USING (auth.role() = 'service_role');
+    TO service_role
+    USING (true) WITH CHECK (true);
 
 -- Users can view their own verification logs
 CREATE POLICY "Users can view own verification logs"
     ON eid.verification_logs FOR SELECT
-    USING (user_id IN (SELECT id FROM public.users WHERE auth_user_id = auth.uid()));
+    TO anon, authenticated
+    USING (user_id IN (SELECT id FROM public.users WHERE auth_user_id = (select auth.uid())));
 
 -- Service role has full access to verification logs
 CREATE POLICY "Service role has full access to verification logs"
     ON eid.verification_logs FOR ALL
-    USING (auth.role() = 'service_role');
+    TO service_role
+    USING (true) WITH CHECK (true);
 
 
 -- ─── Grants ──────────────────────────────────────────────────
