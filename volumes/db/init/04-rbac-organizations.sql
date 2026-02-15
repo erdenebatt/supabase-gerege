@@ -132,197 +132,296 @@ $$;
 -- ═══════════════════════════════════════════════════════════════
 -- F. Drop ALL Existing RLS Policies
 -- ═══════════════════════════════════════════════════════════════
--- public.users
+-- Drop legacy policies (from 01-public-schema.sql)
 DROP POLICY IF EXISTS "Users can view own profile" ON public.users;
 DROP POLICY IF EXISTS "Users can update own profile" ON public.users;
 DROP POLICY IF EXISTS "Service role has full access to users" ON public.users;
-
--- public.user_mfa_settings
 DROP POLICY IF EXISTS "Users can manage own MFA settings" ON public.user_mfa_settings;
 DROP POLICY IF EXISTS "Service role has full access to MFA settings" ON public.user_mfa_settings;
-
--- public.user_totp
 DROP POLICY IF EXISTS "Users can manage own TOTP" ON public.user_totp;
 DROP POLICY IF EXISTS "Service role has full access to TOTP" ON public.user_totp;
-
--- public.mfa_recovery_codes
 DROP POLICY IF EXISTS "Users can manage own recovery codes" ON public.mfa_recovery_codes;
 DROP POLICY IF EXISTS "Service role has full access to recovery codes" ON public.mfa_recovery_codes;
-
--- gesign.certificates
 DROP POLICY IF EXISTS "Users can view own certificates" ON gesign.certificates;
 DROP POLICY IF EXISTS "Service role has full access to certificates" ON gesign.certificates;
-
--- gesign.signing_logs
 DROP POLICY IF EXISTS "Users can view own signing logs" ON gesign.signing_logs;
 DROP POLICY IF EXISTS "Service role has full access to signing logs" ON gesign.signing_logs;
-
--- eid.national_id_metadata
 DROP POLICY IF EXISTS "Users can view own national ID" ON eid.national_id_metadata;
 DROP POLICY IF EXISTS "Service role has full access to national ID" ON eid.national_id_metadata;
-
--- eid.verification_logs
 DROP POLICY IF EXISTS "Users can view own verification logs" ON eid.verification_logs;
 DROP POLICY IF EXISTS "Service role has full access to verification logs" ON eid.verification_logs;
 
+-- Drop previous RBAC policies (from prior version of this file)
+-- public.users
+DROP POLICY IF EXISTS "users_select_own" ON public.users;
+DROP POLICY IF EXISTS "users_select_org" ON public.users;
+DROP POLICY IF EXISTS "users_select_all" ON public.users;
+DROP POLICY IF EXISTS "users_select" ON public.users;
+DROP POLICY IF EXISTS "users_update_own" ON public.users;
+DROP POLICY IF EXISTS "users_update_org" ON public.users;
+DROP POLICY IF EXISTS "users_update_all" ON public.users;
+DROP POLICY IF EXISTS "users_update" ON public.users;
+DROP POLICY IF EXISTS "users_insert_admin" ON public.users;
+DROP POLICY IF EXISTS "users_delete_admin" ON public.users;
+DROP POLICY IF EXISTS "users_service_role" ON public.users;
+-- public.user_mfa_settings
+DROP POLICY IF EXISTS "mfa_settings_own" ON public.user_mfa_settings;
+DROP POLICY IF EXISTS "mfa_settings_select_admin" ON public.user_mfa_settings;
+DROP POLICY IF EXISTS "mfa_settings_select" ON public.user_mfa_settings;
+DROP POLICY IF EXISTS "mfa_settings_insert" ON public.user_mfa_settings;
+DROP POLICY IF EXISTS "mfa_settings_update" ON public.user_mfa_settings;
+DROP POLICY IF EXISTS "mfa_settings_delete" ON public.user_mfa_settings;
+DROP POLICY IF EXISTS "mfa_settings_service_role" ON public.user_mfa_settings;
+-- public.user_totp
+DROP POLICY IF EXISTS "totp_own" ON public.user_totp;
+DROP POLICY IF EXISTS "totp_select_admin" ON public.user_totp;
+DROP POLICY IF EXISTS "totp_select" ON public.user_totp;
+DROP POLICY IF EXISTS "totp_insert" ON public.user_totp;
+DROP POLICY IF EXISTS "totp_update" ON public.user_totp;
+DROP POLICY IF EXISTS "totp_delete" ON public.user_totp;
+DROP POLICY IF EXISTS "totp_service_role" ON public.user_totp;
+-- public.mfa_recovery_codes
+DROP POLICY IF EXISTS "recovery_codes_own" ON public.mfa_recovery_codes;
+DROP POLICY IF EXISTS "recovery_codes_select_admin" ON public.mfa_recovery_codes;
+DROP POLICY IF EXISTS "recovery_codes_select" ON public.mfa_recovery_codes;
+DROP POLICY IF EXISTS "recovery_codes_insert" ON public.mfa_recovery_codes;
+DROP POLICY IF EXISTS "recovery_codes_update" ON public.mfa_recovery_codes;
+DROP POLICY IF EXISTS "recovery_codes_delete" ON public.mfa_recovery_codes;
+DROP POLICY IF EXISTS "recovery_codes_service_role" ON public.mfa_recovery_codes;
+-- gesign.certificates
+DROP POLICY IF EXISTS "certificates_select_own" ON gesign.certificates;
+DROP POLICY IF EXISTS "certificates_select_org" ON gesign.certificates;
+DROP POLICY IF EXISTS "certificates_all_admin" ON gesign.certificates;
+DROP POLICY IF EXISTS "certificates_select" ON gesign.certificates;
+DROP POLICY IF EXISTS "certificates_insert_admin" ON gesign.certificates;
+DROP POLICY IF EXISTS "certificates_update_admin" ON gesign.certificates;
+DROP POLICY IF EXISTS "certificates_delete_admin" ON gesign.certificates;
+DROP POLICY IF EXISTS "certificates_service_role" ON gesign.certificates;
+-- gesign.signing_logs
+DROP POLICY IF EXISTS "signing_logs_select_own" ON gesign.signing_logs;
+DROP POLICY IF EXISTS "signing_logs_select_org" ON gesign.signing_logs;
+DROP POLICY IF EXISTS "signing_logs_all_admin" ON gesign.signing_logs;
+DROP POLICY IF EXISTS "signing_logs_select" ON gesign.signing_logs;
+DROP POLICY IF EXISTS "signing_logs_insert_admin" ON gesign.signing_logs;
+DROP POLICY IF EXISTS "signing_logs_update_admin" ON gesign.signing_logs;
+DROP POLICY IF EXISTS "signing_logs_delete_admin" ON gesign.signing_logs;
+DROP POLICY IF EXISTS "signing_logs_service_role" ON gesign.signing_logs;
+-- eid.national_id_metadata
+DROP POLICY IF EXISTS "national_id_select_own" ON eid.national_id_metadata;
+DROP POLICY IF EXISTS "national_id_select_org" ON eid.national_id_metadata;
+DROP POLICY IF EXISTS "national_id_update_org" ON eid.national_id_metadata;
+DROP POLICY IF EXISTS "national_id_all_admin" ON eid.national_id_metadata;
+DROP POLICY IF EXISTS "national_id_select" ON eid.national_id_metadata;
+DROP POLICY IF EXISTS "national_id_update" ON eid.national_id_metadata;
+DROP POLICY IF EXISTS "national_id_insert_admin" ON eid.national_id_metadata;
+DROP POLICY IF EXISTS "national_id_delete_admin" ON eid.national_id_metadata;
+DROP POLICY IF EXISTS "national_id_service_role" ON eid.national_id_metadata;
+-- eid.verification_logs
+DROP POLICY IF EXISTS "verification_logs_select_own" ON eid.verification_logs;
+DROP POLICY IF EXISTS "verification_logs_select_org" ON eid.verification_logs;
+DROP POLICY IF EXISTS "verification_logs_insert_org" ON eid.verification_logs;
+DROP POLICY IF EXISTS "verification_logs_all_admin" ON eid.verification_logs;
+DROP POLICY IF EXISTS "verification_logs_select" ON eid.verification_logs;
+DROP POLICY IF EXISTS "verification_logs_insert" ON eid.verification_logs;
+DROP POLICY IF EXISTS "verification_logs_update_admin" ON eid.verification_logs;
+DROP POLICY IF EXISTS "verification_logs_delete_admin" ON eid.verification_logs;
+DROP POLICY IF EXISTS "verification_logs_service_role" ON eid.verification_logs;
+-- public.organizations
+DROP POLICY IF EXISTS "organizations_select_authenticated" ON public.organizations;
+DROP POLICY IF EXISTS "organizations_all_admin" ON public.organizations;
+DROP POLICY IF EXISTS "organizations_select" ON public.organizations;
+DROP POLICY IF EXISTS "organizations_insert_admin" ON public.organizations;
+DROP POLICY IF EXISTS "organizations_update_admin" ON public.organizations;
+DROP POLICY IF EXISTS "organizations_delete_admin" ON public.organizations;
+DROP POLICY IF EXISTS "organizations_service_role" ON public.organizations;
+
 
 -- ═══════════════════════════════════════════════════════════════
--- G. New RLS Policies — public.users
+-- G. RLS Policies — public.users (5 policies)
 -- ═══════════════════════════════════════════════════════════════
+-- One policy per (role, action) — no multiple_permissive_policies warnings.
 
--- G1. Own profile: every authenticated user can SELECT their own row
-CREATE POLICY "users_select_own" ON public.users
-    FOR SELECT TO authenticated
-    USING (auth_user_id = (SELECT auth.uid()));
-
--- G2. ORG_ADMIN can SELECT users in their org
-CREATE POLICY "users_select_org" ON public.users
+-- G1. SELECT: own row OR ORG_ADMIN+ same org OR SUPER_ADMIN
+CREATE POLICY "users_select" ON public.users
     FOR SELECT TO authenticated
     USING (
-        org_id IS NOT NULL
-        AND org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
-        AND (SELECT cui.role FROM public.current_user_info() cui) >= 'ORG_ADMIN'::public.user_role
+        auth_user_id = (SELECT auth.uid())
+        OR (
+            org_id IS NOT NULL
+            AND org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
+            AND (SELECT cui.role FROM public.current_user_info() cui) >= 'ORG_ADMIN'::public.user_role
+        )
+        OR (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
--- G3. SUPER_ADMIN can SELECT all users
-CREATE POLICY "users_select_all" ON public.users
-    FOR SELECT TO authenticated
-    USING (
-        (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
-    );
-
--- G4. Own profile: every authenticated user can UPDATE their own row
-CREATE POLICY "users_update_own" ON public.users
-    FOR UPDATE TO authenticated
-    USING (auth_user_id = (SELECT auth.uid()))
-    WITH CHECK (auth_user_id = (SELECT auth.uid()));
-
--- G5. ORG_ADMIN can UPDATE users in their org
-CREATE POLICY "users_update_org" ON public.users
+-- G2. UPDATE: own row OR ORG_ADMIN+ same org OR SUPER_ADMIN
+CREATE POLICY "users_update" ON public.users
     FOR UPDATE TO authenticated
     USING (
-        org_id IS NOT NULL
-        AND org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
-        AND (SELECT cui.role FROM public.current_user_info() cui) >= 'ORG_ADMIN'::public.user_role
+        auth_user_id = (SELECT auth.uid())
+        OR (
+            org_id IS NOT NULL
+            AND org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
+            AND (SELECT cui.role FROM public.current_user_info() cui) >= 'ORG_ADMIN'::public.user_role
+        )
+        OR (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     )
     WITH CHECK (
-        org_id IS NOT NULL
-        AND org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
-        AND (SELECT cui.role FROM public.current_user_info() cui) >= 'ORG_ADMIN'::public.user_role
+        auth_user_id = (SELECT auth.uid())
+        OR (
+            org_id IS NOT NULL
+            AND org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
+            AND (SELECT cui.role FROM public.current_user_info() cui) >= 'ORG_ADMIN'::public.user_role
+        )
+        OR (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
--- G6. SUPER_ADMIN can UPDATE all users
-CREATE POLICY "users_update_all" ON public.users
-    FOR UPDATE TO authenticated
-    USING (
-        (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
-    )
-    WITH CHECK (
-        (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
-    );
-
--- G7. SUPER_ADMIN can INSERT users
+-- G3. INSERT: SUPER_ADMIN only
 CREATE POLICY "users_insert_admin" ON public.users
     FOR INSERT TO authenticated
     WITH CHECK (
         (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
--- G8. SUPER_ADMIN can DELETE users
+-- G4. DELETE: SUPER_ADMIN only
 CREATE POLICY "users_delete_admin" ON public.users
     FOR DELETE TO authenticated
     USING (
         (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
--- G9. Service role bypass
+-- G5. Service role bypass
 CREATE POLICY "users_service_role" ON public.users
     FOR ALL TO service_role
     USING (true) WITH CHECK (true);
 
 
 -- ═══════════════════════════════════════════════════════════════
--- H. New RLS Policies — MFA Tables (own-only + service_role)
+-- H. RLS Policies — MFA Tables (5 policies each, 15 total)
 -- ═══════════════════════════════════════════════════════════════
+-- Breaks up the old FOR ALL into per-action policies.
+-- SELECT allows own OR SUPER_ADMIN; INSERT/UPDATE/DELETE are own-only.
 
--- user_mfa_settings
-CREATE POLICY "mfa_settings_own" ON public.user_mfa_settings
-    FOR ALL TO authenticated
+-- ── user_mfa_settings ──
+
+CREATE POLICY "mfa_settings_select" ON public.user_mfa_settings
+    FOR SELECT TO authenticated
+    USING (
+        user_id = (SELECT cui.user_id FROM public.current_user_info() cui)
+        OR (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
+    );
+
+CREATE POLICY "mfa_settings_insert" ON public.user_mfa_settings
+    FOR INSERT TO authenticated
+    WITH CHECK (user_id = (SELECT cui.user_id FROM public.current_user_info() cui));
+
+CREATE POLICY "mfa_settings_update" ON public.user_mfa_settings
+    FOR UPDATE TO authenticated
     USING (user_id = (SELECT cui.user_id FROM public.current_user_info() cui))
     WITH CHECK (user_id = (SELECT cui.user_id FROM public.current_user_info() cui));
+
+CREATE POLICY "mfa_settings_delete" ON public.user_mfa_settings
+    FOR DELETE TO authenticated
+    USING (user_id = (SELECT cui.user_id FROM public.current_user_info() cui));
 
 CREATE POLICY "mfa_settings_service_role" ON public.user_mfa_settings
     FOR ALL TO service_role
     USING (true) WITH CHECK (true);
 
--- SUPER_ADMIN can SELECT other users' MFA settings
-CREATE POLICY "mfa_settings_select_admin" ON public.user_mfa_settings
+-- ── user_totp ──
+
+CREATE POLICY "totp_select" ON public.user_totp
     FOR SELECT TO authenticated
     USING (
-        (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
+        user_id = (SELECT cui.user_id FROM public.current_user_info() cui)
+        OR (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
--- user_totp
-CREATE POLICY "totp_own" ON public.user_totp
-    FOR ALL TO authenticated
+CREATE POLICY "totp_insert" ON public.user_totp
+    FOR INSERT TO authenticated
+    WITH CHECK (user_id = (SELECT cui.user_id FROM public.current_user_info() cui));
+
+CREATE POLICY "totp_update" ON public.user_totp
+    FOR UPDATE TO authenticated
     USING (user_id = (SELECT cui.user_id FROM public.current_user_info() cui))
     WITH CHECK (user_id = (SELECT cui.user_id FROM public.current_user_info() cui));
+
+CREATE POLICY "totp_delete" ON public.user_totp
+    FOR DELETE TO authenticated
+    USING (user_id = (SELECT cui.user_id FROM public.current_user_info() cui));
 
 CREATE POLICY "totp_service_role" ON public.user_totp
     FOR ALL TO service_role
     USING (true) WITH CHECK (true);
 
-CREATE POLICY "totp_select_admin" ON public.user_totp
+-- ── mfa_recovery_codes ──
+
+CREATE POLICY "recovery_codes_select" ON public.mfa_recovery_codes
     FOR SELECT TO authenticated
     USING (
-        (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
+        user_id = (SELECT cui.user_id FROM public.current_user_info() cui)
+        OR (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
--- mfa_recovery_codes
-CREATE POLICY "recovery_codes_own" ON public.mfa_recovery_codes
-    FOR ALL TO authenticated
+CREATE POLICY "recovery_codes_insert" ON public.mfa_recovery_codes
+    FOR INSERT TO authenticated
+    WITH CHECK (user_id = (SELECT cui.user_id FROM public.current_user_info() cui));
+
+CREATE POLICY "recovery_codes_update" ON public.mfa_recovery_codes
+    FOR UPDATE TO authenticated
     USING (user_id = (SELECT cui.user_id FROM public.current_user_info() cui))
     WITH CHECK (user_id = (SELECT cui.user_id FROM public.current_user_info() cui));
+
+CREATE POLICY "recovery_codes_delete" ON public.mfa_recovery_codes
+    FOR DELETE TO authenticated
+    USING (user_id = (SELECT cui.user_id FROM public.current_user_info() cui));
 
 CREATE POLICY "recovery_codes_service_role" ON public.mfa_recovery_codes
     FOR ALL TO service_role
     USING (true) WITH CHECK (true);
 
-CREATE POLICY "recovery_codes_select_admin" ON public.mfa_recovery_codes
+
+-- ═══════════════════════════════════════════════════════════════
+-- I. RLS Policies — gesign schema (5 policies each, 10 total)
+-- ═══════════════════════════════════════════════════════════════
+-- SELECT consolidated: own OR org(OPERATOR+) OR SUPER_ADMIN
+-- INSERT/UPDATE/DELETE: SUPER_ADMIN only (no more FOR ALL overlap)
+
+-- ── certificates ──
+
+CREATE POLICY "certificates_select" ON gesign.certificates
     FOR SELECT TO authenticated
     USING (
+        user_id = (SELECT cui.user_id FROM public.current_user_info() cui)
+        OR (
+            (SELECT cui.role FROM public.current_user_info() cui) >= 'OPERATOR'::public.user_role
+            AND user_id IN (
+                SELECT u.id FROM public.users u
+                WHERE u.org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
+                  AND (SELECT cui.org_id FROM public.current_user_info() cui) IS NOT NULL
+            )
+        )
+        OR (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
+    );
+
+CREATE POLICY "certificates_insert_admin" ON gesign.certificates
+    FOR INSERT TO authenticated
+    WITH CHECK (
         (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
-
--- ═══════════════════════════════════════════════════════════════
--- I. New RLS Policies — gesign schema
--- ═══════════════════════════════════════════════════════════════
-
--- certificates: own SELECT
-CREATE POLICY "certificates_select_own" ON gesign.certificates
-    FOR SELECT TO authenticated
-    USING (user_id = (SELECT cui.user_id FROM public.current_user_info() cui));
-
--- certificates: OPERATOR+ can SELECT within their org
-CREATE POLICY "certificates_select_org" ON gesign.certificates
-    FOR SELECT TO authenticated
-    USING (
-        (SELECT cui.role FROM public.current_user_info() cui) >= 'OPERATOR'::public.user_role
-        AND user_id IN (
-            SELECT u.id FROM public.users u
-            WHERE u.org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
-              AND (SELECT cui.org_id FROM public.current_user_info() cui) IS NOT NULL
-        )
-    );
-
--- certificates: SUPER_ADMIN full access
-CREATE POLICY "certificates_all_admin" ON gesign.certificates
-    FOR ALL TO authenticated
+CREATE POLICY "certificates_update_admin" ON gesign.certificates
+    FOR UPDATE TO authenticated
     USING (
         (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     )
     WITH CHECK (
+        (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
+    );
+
+CREATE POLICY "certificates_delete_admin" ON gesign.certificates
+    FOR DELETE TO authenticated
+    USING (
         (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
@@ -330,30 +429,41 @@ CREATE POLICY "certificates_service_role" ON gesign.certificates
     FOR ALL TO service_role
     USING (true) WITH CHECK (true);
 
--- signing_logs: own SELECT
-CREATE POLICY "signing_logs_select_own" ON gesign.signing_logs
-    FOR SELECT TO authenticated
-    USING (user_id = (SELECT cui.user_id FROM public.current_user_info() cui));
+-- ── signing_logs ──
 
--- signing_logs: OPERATOR+ can SELECT within their org
-CREATE POLICY "signing_logs_select_org" ON gesign.signing_logs
+CREATE POLICY "signing_logs_select" ON gesign.signing_logs
     FOR SELECT TO authenticated
     USING (
-        (SELECT cui.role FROM public.current_user_info() cui) >= 'OPERATOR'::public.user_role
-        AND user_id IN (
-            SELECT u.id FROM public.users u
-            WHERE u.org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
-              AND (SELECT cui.org_id FROM public.current_user_info() cui) IS NOT NULL
+        user_id = (SELECT cui.user_id FROM public.current_user_info() cui)
+        OR (
+            (SELECT cui.role FROM public.current_user_info() cui) >= 'OPERATOR'::public.user_role
+            AND user_id IN (
+                SELECT u.id FROM public.users u
+                WHERE u.org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
+                  AND (SELECT cui.org_id FROM public.current_user_info() cui) IS NOT NULL
+            )
         )
+        OR (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
--- signing_logs: SUPER_ADMIN full access
-CREATE POLICY "signing_logs_all_admin" ON gesign.signing_logs
-    FOR ALL TO authenticated
+CREATE POLICY "signing_logs_insert_admin" ON gesign.signing_logs
+    FOR INSERT TO authenticated
+    WITH CHECK (
+        (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
+    );
+
+CREATE POLICY "signing_logs_update_admin" ON gesign.signing_logs
+    FOR UPDATE TO authenticated
     USING (
         (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     )
     WITH CHECK (
+        (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
+    );
+
+CREATE POLICY "signing_logs_delete_admin" ON gesign.signing_logs
+    FOR DELETE TO authenticated
+    USING (
         (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
@@ -363,53 +473,64 @@ CREATE POLICY "signing_logs_service_role" ON gesign.signing_logs
 
 
 -- ═══════════════════════════════════════════════════════════════
--- J. New RLS Policies — eid schema
+-- J. RLS Policies — eid schema (5 policies each, 10 total)
 -- ═══════════════════════════════════════════════════════════════
 
--- national_id_metadata: own SELECT
-CREATE POLICY "national_id_select_own" ON eid.national_id_metadata
-    FOR SELECT TO authenticated
-    USING (user_id = (SELECT cui.user_id FROM public.current_user_info() cui));
+-- ── national_id_metadata ──
 
--- national_id_metadata: OPERATOR+ can SELECT within their org
-CREATE POLICY "national_id_select_org" ON eid.national_id_metadata
+-- SELECT: own OR org(OPERATOR+) OR SUPER_ADMIN
+CREATE POLICY "national_id_select" ON eid.national_id_metadata
     FOR SELECT TO authenticated
     USING (
-        (SELECT cui.role FROM public.current_user_info() cui) >= 'OPERATOR'::public.user_role
-        AND user_id IN (
-            SELECT u.id FROM public.users u
-            WHERE u.org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
-              AND (SELECT cui.org_id FROM public.current_user_info() cui) IS NOT NULL
+        user_id = (SELECT cui.user_id FROM public.current_user_info() cui)
+        OR (
+            (SELECT cui.role FROM public.current_user_info() cui) >= 'OPERATOR'::public.user_role
+            AND user_id IN (
+                SELECT u.id FROM public.users u
+                WHERE u.org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
+                  AND (SELECT cui.org_id FROM public.current_user_info() cui) IS NOT NULL
+            )
         )
+        OR (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
--- national_id_metadata: OPERATOR+ can UPDATE within their org (for verification)
-CREATE POLICY "national_id_update_org" ON eid.national_id_metadata
+-- UPDATE: org(OPERATOR+) OR SUPER_ADMIN (for verification workflow)
+CREATE POLICY "national_id_update" ON eid.national_id_metadata
     FOR UPDATE TO authenticated
     USING (
-        (SELECT cui.role FROM public.current_user_info() cui) >= 'OPERATOR'::public.user_role
-        AND user_id IN (
-            SELECT u.id FROM public.users u
-            WHERE u.org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
-              AND (SELECT cui.org_id FROM public.current_user_info() cui) IS NOT NULL
+        (
+            (SELECT cui.role FROM public.current_user_info() cui) >= 'OPERATOR'::public.user_role
+            AND user_id IN (
+                SELECT u.id FROM public.users u
+                WHERE u.org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
+                  AND (SELECT cui.org_id FROM public.current_user_info() cui) IS NOT NULL
+            )
         )
+        OR (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     )
     WITH CHECK (
-        (SELECT cui.role FROM public.current_user_info() cui) >= 'OPERATOR'::public.user_role
-        AND user_id IN (
-            SELECT u.id FROM public.users u
-            WHERE u.org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
-              AND (SELECT cui.org_id FROM public.current_user_info() cui) IS NOT NULL
+        (
+            (SELECT cui.role FROM public.current_user_info() cui) >= 'OPERATOR'::public.user_role
+            AND user_id IN (
+                SELECT u.id FROM public.users u
+                WHERE u.org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
+                  AND (SELECT cui.org_id FROM public.current_user_info() cui) IS NOT NULL
+            )
         )
+        OR (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
--- national_id_metadata: SUPER_ADMIN full access
-CREATE POLICY "national_id_all_admin" ON eid.national_id_metadata
-    FOR ALL TO authenticated
-    USING (
-        (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
-    )
+-- INSERT: SUPER_ADMIN only
+CREATE POLICY "national_id_insert_admin" ON eid.national_id_metadata
+    FOR INSERT TO authenticated
     WITH CHECK (
+        (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
+    );
+
+-- DELETE: SUPER_ADMIN only
+CREATE POLICY "national_id_delete_admin" ON eid.national_id_metadata
+    FOR DELETE TO authenticated
+    USING (
         (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
@@ -417,42 +538,53 @@ CREATE POLICY "national_id_service_role" ON eid.national_id_metadata
     FOR ALL TO service_role
     USING (true) WITH CHECK (true);
 
--- verification_logs: own SELECT
-CREATE POLICY "verification_logs_select_own" ON eid.verification_logs
-    FOR SELECT TO authenticated
-    USING (user_id = (SELECT cui.user_id FROM public.current_user_info() cui));
+-- ── verification_logs ──
 
--- verification_logs: OPERATOR+ can SELECT within their org
-CREATE POLICY "verification_logs_select_org" ON eid.verification_logs
+-- SELECT: own OR org(OPERATOR+) OR SUPER_ADMIN
+CREATE POLICY "verification_logs_select" ON eid.verification_logs
     FOR SELECT TO authenticated
     USING (
-        (SELECT cui.role FROM public.current_user_info() cui) >= 'OPERATOR'::public.user_role
-        AND user_id IN (
-            SELECT u.id FROM public.users u
-            WHERE u.org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
-              AND (SELECT cui.org_id FROM public.current_user_info() cui) IS NOT NULL
+        user_id = (SELECT cui.user_id FROM public.current_user_info() cui)
+        OR (
+            (SELECT cui.role FROM public.current_user_info() cui) >= 'OPERATOR'::public.user_role
+            AND user_id IN (
+                SELECT u.id FROM public.users u
+                WHERE u.org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
+                  AND (SELECT cui.org_id FROM public.current_user_info() cui) IS NOT NULL
+            )
         )
+        OR (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
--- verification_logs: OPERATOR+ can INSERT within their org (for verification results)
-CREATE POLICY "verification_logs_insert_org" ON eid.verification_logs
+-- INSERT: org(OPERATOR+) OR SUPER_ADMIN (for verification results)
+CREATE POLICY "verification_logs_insert" ON eid.verification_logs
     FOR INSERT TO authenticated
     WITH CHECK (
-        (SELECT cui.role FROM public.current_user_info() cui) >= 'OPERATOR'::public.user_role
-        AND user_id IN (
-            SELECT u.id FROM public.users u
-            WHERE u.org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
-              AND (SELECT cui.org_id FROM public.current_user_info() cui) IS NOT NULL
+        (
+            (SELECT cui.role FROM public.current_user_info() cui) >= 'OPERATOR'::public.user_role
+            AND user_id IN (
+                SELECT u.id FROM public.users u
+                WHERE u.org_id = (SELECT cui.org_id FROM public.current_user_info() cui)
+                  AND (SELECT cui.org_id FROM public.current_user_info() cui) IS NOT NULL
+            )
         )
+        OR (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
--- verification_logs: SUPER_ADMIN full access
-CREATE POLICY "verification_logs_all_admin" ON eid.verification_logs
-    FOR ALL TO authenticated
+-- UPDATE: SUPER_ADMIN only
+CREATE POLICY "verification_logs_update_admin" ON eid.verification_logs
+    FOR UPDATE TO authenticated
     USING (
         (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     )
     WITH CHECK (
+        (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
+    );
+
+-- DELETE: SUPER_ADMIN only
+CREATE POLICY "verification_logs_delete_admin" ON eid.verification_logs
+    FOR DELETE TO authenticated
+    USING (
         (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 
@@ -462,21 +594,35 @@ CREATE POLICY "verification_logs_service_role" ON eid.verification_logs
 
 
 -- ═══════════════════════════════════════════════════════════════
--- K. Organizations RLS Policies
+-- K. RLS Policies — public.organizations (5 policies)
 -- ═══════════════════════════════════════════════════════════════
 
--- All authenticated users can see organizations
-CREATE POLICY "organizations_select_authenticated" ON public.organizations
+-- SELECT: all authenticated users can see organizations
+CREATE POLICY "organizations_select" ON public.organizations
     FOR SELECT TO authenticated
     USING (true);
 
--- SUPER_ADMIN can manage organizations
-CREATE POLICY "organizations_all_admin" ON public.organizations
-    FOR ALL TO authenticated
+-- INSERT: SUPER_ADMIN only
+CREATE POLICY "organizations_insert_admin" ON public.organizations
+    FOR INSERT TO authenticated
+    WITH CHECK (
+        (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
+    );
+
+-- UPDATE: SUPER_ADMIN only
+CREATE POLICY "organizations_update_admin" ON public.organizations
+    FOR UPDATE TO authenticated
     USING (
         (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     )
     WITH CHECK (
+        (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
+    );
+
+-- DELETE: SUPER_ADMIN only
+CREATE POLICY "organizations_delete_admin" ON public.organizations
+    FOR DELETE TO authenticated
+    USING (
         (SELECT cui.role FROM public.current_user_info() cui) = 'SUPER_ADMIN'::public.user_role
     );
 

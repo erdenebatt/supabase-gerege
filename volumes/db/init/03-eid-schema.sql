@@ -57,6 +57,7 @@ CREATE INDEX IF NOT EXISTS idx_national_id_document_number ON eid.national_id_me
 CREATE INDEX IF NOT EXISTS idx_national_id_register_number ON eid.national_id_metadata (register_number) WHERE register_number IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_national_id_verification_status ON eid.national_id_metadata (verification_status);
 CREATE INDEX IF NOT EXISTS idx_national_id_expiry ON eid.national_id_metadata (expiry_date) WHERE verification_status = 'verified';
+CREATE INDEX IF NOT EXISTS idx_national_id_verified_by ON eid.national_id_metadata (verified_by);
 
 CREATE TRIGGER set_national_id_updated_at
     BEFORE UPDATE ON eid.national_id_metadata

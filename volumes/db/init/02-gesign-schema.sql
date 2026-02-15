@@ -46,7 +46,7 @@ CREATE TABLE IF NOT EXISTS gesign.certificates (
 
 -- Indexes
 CREATE INDEX IF NOT EXISTS idx_certificates_user_id ON gesign.certificates (user_id);
-CREATE INDEX IF NOT EXISTS idx_certificates_serial ON gesign.certificates (serial_number);
+-- serial_number already indexed by UNIQUE constraint (certificates_serial_number_key)
 CREATE INDEX IF NOT EXISTS idx_certificates_status ON gesign.certificates (status) WHERE status = 'active';
 CREATE INDEX IF NOT EXISTS idx_certificates_not_after ON gesign.certificates (not_after);
 

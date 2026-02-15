@@ -340,7 +340,7 @@ services:
       DATABASE_URL: ecto://supabase_admin:${POSTGRES_PASSWORD}@db:${POSTGRES_PORT:-5432}/${POSTGRES_DB:-postgres}
       CLUSTER_POSTGRES: "true"
       SECRET_KEY_BASE: UpNVntn3cDxHJpq99YMc1T1AQgQpc8kfYTuRgBiYa15BLrx8etQoXz3gZv1/u2oq
-      VAULT_ENC_KEY: ${JWT_SECRET}
+      VAULT_ENC_KEY: b5c709f3efce2f2767cd69ce8d1b2e3e
       API_JWT_SECRET: ${JWT_SECRET}
       METRICS_JWT_SECRET: ${JWT_SECRET}
       REGION: local
