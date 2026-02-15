@@ -55,6 +55,8 @@ echo ""
 echo ">>> Generating Kong config with API keys..."
 ANON_KEY_VAL=$(grep "^ANON_KEY=" "$ENV_FILE" | cut -d= -f2-)
 SERVICE_KEY_VAL=$(grep "^SERVICE_ROLE_KEY=" "$ENV_FILE" | cut -d= -f2-)
+DASH_USER_VAL=$(grep "^DASHBOARD_USERNAME=" "$ENV_FILE" | cut -d= -f2-)
+DASH_PASS_VAL=$(grep "^DASHBOARD_PASSWORD=" "$ENV_FILE" | cut -d= -f2-)
 if [ -f "$PROJECT_DIR/volumes/api/kong.yml.template" ]; then
     KONG_TEMPLATE="$PROJECT_DIR/volumes/api/kong.yml.template"
 else
@@ -63,6 +65,8 @@ fi
 sed \
     -e "s|\${SUPABASE_ANON_KEY}|${ANON_KEY_VAL}|g" \
     -e "s|\${SUPABASE_SERVICE_KEY}|${SERVICE_KEY_VAL}|g" \
+    -e "s|\${DASHBOARD_USERNAME}|${DASH_USER_VAL}|g" \
+    -e "s|\${DASHBOARD_PASSWORD}|${DASH_PASS_VAL}|g" \
     "$KONG_TEMPLATE" > "$PROJECT_DIR/volumes/api/kong.yml"
 echo "    Kong config: OK"
 echo ""
