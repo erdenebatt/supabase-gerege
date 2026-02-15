@@ -50,8 +50,6 @@ for entry in "${CONTAINERS[@]}"; do
     if [ "$STATUS" = "running" ]; then
         if [ "$HEALTH" = "healthy" ]; then
             ok "$label ($container): running, healthy"
-        elif [ "$HEALTH" = "no_healthcheck" ]; then
-            info "$label ($container): running (no healthcheck)"
         else
             warn "$label ($container): running, $HEALTH"
         fi
