@@ -67,7 +67,7 @@ CITIZEN < OPERATOR < ORG_ADMIN < SUPER_ADMIN
 - **`users.role`**: `user_role` enum (was VARCHAR), defaults to `CITIZEN`
 - **`current_user_info()`**: `SECURITY DEFINER` helper that returns `(user_id, org_id, role)` — used by all RLS policies to avoid infinite recursion
 - **Auth hook**: Trigger `on_auth_user_created` on `auth.users` auto-provisions `public.users` rows:
-  - `@gerege.mn` emails → `SUPER_ADMIN` role + Gerege org
+  - `@gerege.mn` emails → `SUPER_ADMIN` role + Gerege Systems org
   - Other emails → `CITIZEN` role + org matched by domain (if exists)
 - **Anon access**: Revoked on all user-data tables — authenticated-only
 

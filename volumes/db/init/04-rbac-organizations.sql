@@ -54,8 +54,8 @@ ALTER TABLE public.organizations ENABLE ROW LEVEL SECURITY;
 -- C. Seed Gerege Organization
 -- ═══════════════════════════════════════════════════════════════
 INSERT INTO public.organizations (name, domain, status)
-VALUES ('Gerege', 'gerege.mn', 'active')
-ON CONFLICT (domain) DO NOTHING;
+VALUES ('Gerege Systems', 'gerege.mn', 'active')
+ON CONFLICT (domain) DO UPDATE SET name = 'Gerege Systems';
 
 
 -- ═══════════════════════════════════════════════════════════════
