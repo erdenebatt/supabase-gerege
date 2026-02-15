@@ -6,7 +6,7 @@
 -- Central user registry for the Gerege ecosystem
 -- Extends Supabase auth.users with application-level profile data
 CREATE TABLE IF NOT EXISTS public.users (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
     auth_user_id UUID UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
 
     -- Identity
@@ -65,7 +65,7 @@ CREATE TRIGGER set_users_updated_at
 -- ─── User MFA Settings ──────────────────────────────────────
 -- Per-user MFA configuration (what methods are enabled)
 CREATE TABLE IF NOT EXISTS public.user_mfa_settings (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
 
     -- Method toggles
@@ -92,7 +92,7 @@ CREATE TRIGGER set_user_mfa_settings_updated_at
 -- TOTP secrets stored with AES-256-GCM encryption
 -- The actual encryption/decryption happens at the application layer
 CREATE TABLE IF NOT EXISTS public.user_totp (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
 
     -- Encrypted TOTP secret (AES-256-GCM at application level)
@@ -123,7 +123,7 @@ CREATE TRIGGER set_user_totp_updated_at
 -- ─── MFA Recovery Codes ──────────────────────────────────────
 -- One-time-use recovery codes, stored as SHA-256 hashes
 CREATE TABLE IF NOT EXISTS public.mfa_recovery_codes (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE CASCADE,
 
     -- SHA-256 hash of the recovery code (never store plaintext)

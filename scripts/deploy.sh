@@ -37,10 +37,10 @@ if ! docker compose version > /dev/null 2>&1; then
 fi
 
 # Validate required env vars
-source "$ENV_FILE"
 REQUIRED_VARS=("POSTGRES_PASSWORD" "JWT_SECRET" "ANON_KEY" "SERVICE_ROLE_KEY")
 for var in "${REQUIRED_VARS[@]}"; do
-    if [ -z "${!var:-}" ]; then
+    val=$(grep "^${var}=" "$ENV_FILE" | head -1 | cut -d= -f2-)
+    if [ -z "$val" ]; then
         echo "ERROR: $var is not set in .env"
         exit 1
     fi
@@ -51,13 +51,67 @@ echo "    Docker: $(docker --version | cut -d' ' -f3 | tr -d ',')"
 echo "    Compose: $(docker compose version --short)"
 echo ""
 
+# ─── Generate kong.yml with actual API keys ──────────────────
+echo ">>> Generating Kong config with API keys..."
+ANON_KEY_VAL=$(grep "^ANON_KEY=" "$ENV_FILE" | cut -d= -f2-)
+SERVICE_KEY_VAL=$(grep "^SERVICE_ROLE_KEY=" "$ENV_FILE" | cut -d= -f2-)
+if [ -f "$PROJECT_DIR/volumes/api/kong.yml.template" ]; then
+    KONG_TEMPLATE="$PROJECT_DIR/volumes/api/kong.yml.template"
+else
+    KONG_TEMPLATE="$PROJECT_DIR/volumes/api/kong.yml"
+fi
+sed \
+    -e "s|\${SUPABASE_ANON_KEY}|${ANON_KEY_VAL}|g" \
+    -e "s|\${SUPABASE_SERVICE_KEY}|${SERVICE_KEY_VAL}|g" \
+    "$KONG_TEMPLATE" > "$PROJECT_DIR/volumes/api/kong.yml"
+echo "    Kong config: OK"
+echo ""
+
 # ─── Pull images ──────────────────────────────────────────────
 echo ">>> Pulling Docker images (this may take a few minutes)..."
 docker compose pull
 echo ""
 
-# ─── Start the stack ──────────────────────────────────────────
-echo ">>> Starting Supabase stack..."
+# ─── Start database first ─────────────────────────────────────
+echo ">>> Starting PostgreSQL..."
+docker compose up -d db
+echo "    Waiting for PostgreSQL to be healthy..."
+TIMEOUT=60
+START=$SECONDS
+while [ $(( SECONDS - START )) -lt $TIMEOUT ]; do
+    HEALTH=$(docker inspect --format='{{.State.Health.Status}}' supabase-db 2>/dev/null || echo "starting")
+    if [ "$HEALTH" = "healthy" ]; then
+        echo "    PostgreSQL: HEALTHY"
+        break
+    fi
+    sleep 2
+done
+
+# Apply Gerege schemas before other services start
+echo ">>> Applying Gerege database schemas..."
+INIT_DIR="/etc/supabase/init"
+for sql_file in 00-extensions.sql 01-public-schema.sql 02-gesign-schema.sql 03-eid-schema.sql; do
+    echo -n "    $sql_file: "
+    if docker exec supabase-db psql -U supabase_admin -d postgres -f "$INIT_DIR/$sql_file" > /dev/null 2>&1; then
+        echo "OK"
+    else
+        echo "FAILED"
+        docker exec supabase-db psql -U supabase_admin -d postgres -f "$INIT_DIR/$sql_file" 2>&1 | tail -5
+    fi
+done
+
+# Set passwords for service roles
+echo ">>> Setting service role passwords..."
+PW=$(grep "^POSTGRES_PASSWORD=" "$ENV_FILE" | cut -d= -f2-)
+for role in supabase_auth_admin supabase_storage_admin authenticator postgres supabase_admin; do
+    docker exec supabase-db psql -U supabase_admin -d postgres -c "ALTER USER $role WITH PASSWORD '$PW';" > /dev/null 2>&1
+done
+echo "    Passwords set"
+
+echo ""
+
+# ─── Start the full stack ─────────────────────────────────────
+echo ">>> Starting all services..."
 docker compose up -d
 echo ""
 
@@ -108,12 +162,13 @@ done
 echo ""
 
 # ─── Verify database ─────────────────────────────────────────
+echo ""
 echo ">>> Verifying database..."
-if docker exec supabase-db pg_isready -U postgres -h localhost > /dev/null 2>&1; then
+if docker exec supabase-db pg_isready -U supabase_admin -h localhost > /dev/null 2>&1; then
     echo "    PostgreSQL: READY"
 
     # Check schemas exist
-    SCHEMAS=$(docker exec supabase-db psql -U postgres -t -c "SELECT schema_name FROM information_schema.schemata WHERE schema_name IN ('public','gesign','eid') ORDER BY schema_name;")
+    SCHEMAS=$(docker exec supabase-db psql -U supabase_admin -d postgres -t -c "SELECT schema_name FROM information_schema.schemata WHERE schema_name IN ('public','gesign','eid') ORDER BY schema_name;")
     echo "    Schemas: $(echo $SCHEMAS | tr -s ' ' ', ')"
 else
     echo "    PostgreSQL: NOT READY"
@@ -127,8 +182,8 @@ if [ $FAILED -eq 0 ]; then
     echo "========================================"
     echo "  Deployment successful!"
     echo ""
-    echo "  Studio:    http://localhost:${STUDIO_PORT:-3000}"
-    echo "  Kong API:  http://localhost:${KONG_HTTP_PORT:-8000}"
+    echo "  Studio:    http://localhost:3000"
+    echo "  Kong API:  http://localhost:8000"
     echo "  PostgreSQL: localhost:5432"
     echo ""
     echo "  Next: Run ./scripts/db-status.sh"

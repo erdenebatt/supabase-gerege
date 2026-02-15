@@ -6,7 +6,7 @@
 -- Citizen electronic identity metadata
 -- Sensitive fields are stored encrypted at application level
 CREATE TABLE IF NOT EXISTS eid.national_id_metadata (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE RESTRICT,
 
     -- ID document info
@@ -30,7 +30,7 @@ CREATE TABLE IF NOT EXISTS eid.national_id_metadata (
     -- Document validity
     issue_date DATE NOT NULL,
     expiry_date DATE NOT NULL,
-    is_expired BOOLEAN GENERATED ALWAYS AS (CURRENT_DATE > expiry_date) STORED,
+    -- Note: is_expired computed at query time, not as generated column (CURRENT_DATE is not immutable)
 
     -- Verification state
     verification_status VARCHAR(20) NOT NULL DEFAULT 'pending'
@@ -66,7 +66,7 @@ CREATE TRIGGER set_national_id_updated_at
 -- ─── Verification Logs ───────────────────────────────────────
 -- Audit trail for all identity verification operations
 CREATE TABLE IF NOT EXISTS eid.verification_logs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
     national_id_record_id UUID REFERENCES eid.national_id_metadata(id) ON DELETE SET NULL,
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE RESTRICT,
 

@@ -5,7 +5,7 @@
 -- ─── Certificates ────────────────────────────────────────────
 -- Digital certificate storage (X.509)
 CREATE TABLE IF NOT EXISTS gesign.certificates (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE RESTRICT,
 
     -- Certificate identity
@@ -23,7 +23,7 @@ CREATE TABLE IF NOT EXISTS gesign.certificates (
     -- Validity
     not_before TIMESTAMPTZ NOT NULL,
     not_after TIMESTAMPTZ NOT NULL,
-    is_expired BOOLEAN GENERATED ALWAYS AS (now() > not_after) STORED,
+    -- Note: is_expired computed at query time, not as generated column (now() is not immutable)
 
     -- Revocation
     is_revoked BOOLEAN NOT NULL DEFAULT false,
@@ -58,7 +58,7 @@ CREATE TRIGGER set_certificates_updated_at
 -- ─── Signing Logs ────────────────────────────────────────────
 -- Audit trail for all document signing operations
 CREATE TABLE IF NOT EXISTS gesign.signing_logs (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT extensions.uuid_generate_v4(),
     certificate_id UUID NOT NULL REFERENCES gesign.certificates(id) ON DELETE RESTRICT,
     user_id UUID NOT NULL REFERENCES public.users(id) ON DELETE RESTRICT,
 

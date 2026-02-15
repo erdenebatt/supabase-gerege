@@ -373,7 +373,7 @@ services:
     volumes:
       - db-data:/var/lib/postgresql/data
       - ./volumes/db/postgresql.conf:/etc/postgresql/postgresql.conf:ro
-      - ./volumes/db/init:/docker-entrypoint-initdb.d:ro
+      - ./volumes/db/init:/etc/supabase/init:ro
     deploy:
       resources:
         limits:
