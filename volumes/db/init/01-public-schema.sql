@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.users (
     auth_user_id UUID UNIQUE REFERENCES auth.users(id) ON DELETE CASCADE,
 
     -- Identity
-    email CITEXT UNIQUE NOT NULL,
+    email extensions.CITEXT UNIQUE NOT NULL,
     phone VARCHAR(20),
     full_name VARCHAR(255),
     display_name VARCHAR(100),
@@ -55,7 +55,8 @@ BEGIN
     NEW.updated_at = now();
     RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$ LANGUAGE plpgsql
+SET search_path = public;
 
 CREATE TRIGGER set_users_updated_at
     BEFORE UPDATE ON public.users

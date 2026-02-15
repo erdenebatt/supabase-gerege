@@ -3,10 +3,10 @@
 -- Run after supabase/postgres image has completed its own initialization
 -- Execute via: docker exec supabase-db psql -U supabase_admin -d postgres -f /etc/supabase/init/00-extensions.sql
 
--- Additional extensions (supabase image already provides uuid-ossp, pgcrypto, pgjwt, etc.)
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE EXTENSION IF NOT EXISTS unaccent;
-CREATE EXTENSION IF NOT EXISTS citext;
+-- Additional extensions in extensions schema
+CREATE EXTENSION IF NOT EXISTS pg_trgm SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS unaccent SCHEMA extensions;
+CREATE EXTENSION IF NOT EXISTS citext SCHEMA extensions;
 CREATE EXTENSION IF NOT EXISTS pg_stat_statements;
 
 -- Create schemas required by Supabase services
