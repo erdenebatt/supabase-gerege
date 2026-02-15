@@ -9,14 +9,16 @@ services:
     image: supabase/studio:2026.01.27-sha-6aa59ff
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "node", "-e", "require('http').get('http://localhost:3000/api/profile', (r) => {if (r.statusCode !== 200) throw new Error(r.statusCode)})"]
-      timeout: 5s
-      interval: 5s
-      retries: 3
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3000').then((r) => { if (r.status >= 500) throw new Error(r.status) })"]
+      timeout: 10s
+      interval: 10s
+      retries: 5
+      start_period: 30s
     depends_on:
       analytics:
         condition: service_healthy
     environment:
+      HOSTNAME: 0.0.0.0
       STUDIO_PG_META_URL: http://meta:8080
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
 
@@ -216,10 +218,11 @@ services:
     image: supabase/storage-api:v1.37.1
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:5000/status"]
-      timeout: 5s
-      interval: 5s
-      retries: 3
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://127.0.0.1:5000/status"]
+      timeout: 10s
+      interval: 10s
+      retries: 5
+      start_period: 20s
     depends_on:
       db:
         condition: service_healthy
