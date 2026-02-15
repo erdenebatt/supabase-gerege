@@ -94,7 +94,7 @@ done
 # Apply Gerege schemas before other services start
 echo ">>> Applying Gerege database schemas..."
 INIT_DIR="/etc/supabase/init"
-for sql_file in 00-extensions.sql 01-public-schema.sql 02-gesign-schema.sql 03-eid-schema.sql; do
+for sql_file in 00-extensions.sql 01-public-schema.sql 02-gesign-schema.sql 03-eid-schema.sql 04-rbac-organizations.sql; do
     echo -n "    $sql_file: "
     if docker exec supabase-db psql -U supabase_admin -d postgres -f "$INIT_DIR/$sql_file" > /dev/null 2>&1; then
         echo "OK"
