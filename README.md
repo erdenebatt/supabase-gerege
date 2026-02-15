@@ -30,11 +30,32 @@ Internet
 
 | Schema | Purpose | Tables |
 |--------|---------|--------|
-| `public` | Core users + MFA | `users`, `user_mfa_settings`, `user_totp`, `mfa_recovery_codes` |
+| `public` | Core users + MFA + RBAC | `users`, `organizations`, `user_mfa_settings`, `user_totp`, `mfa_recovery_codes` |
 | `gesign` | Digital signatures | `certificates`, `signing_logs` |
 | `eid` | Identity verification | `national_id_metadata`, `verification_logs` |
 | `auth` | Supabase Auth (managed) | `users`, `sessions`, `mfa_factors`, ... |
 | `storage` | Supabase Storage (managed) | `buckets`, `objects`, ... |
+
+## RBAC System
+
+Organization-based role hierarchy enforced via PostgreSQL enum and Row Level Security:
+
+```
+CITIZEN < OPERATOR < ORG_ADMIN < SUPER_ADMIN
+```
+
+| Role | Scope |
+|------|-------|
+| **CITIZEN** | Own data only (default for new signups) |
+| **OPERATOR** | Own data + read/write within their org (verification processing) |
+| **ORG_ADMIN** | Full management of users within their org |
+| **SUPER_ADMIN** | Full access across all orgs and all data |
+
+- Users are assigned to organizations via `users.org_id` (nullable — unaffiliated users allowed)
+- Auth hook on `auth.users` auto-provisions `public.users` on signup:
+  - `@gerege.mn` emails → `SUPER_ADMIN` + Gerege org
+  - Other emails → `CITIZEN` + org matched by email domain (if exists)
+- Anon access is revoked on all user-data tables — authenticated JWT required
 
 ## Quick Start
 
@@ -79,7 +100,8 @@ supabase-gerege/
 │   │       ├── 00-extensions.sql    # Required extensions
 │   │       ├── 01-public-schema.sql # Users + MFA tables
 │   │       ├── 02-gesign-schema.sql # Digital signature tables
-│   │       └── 03-eid-schema.sql    # eID verification tables
+│   │       ├── 03-eid-schema.sql    # eID verification tables
+│   │       └── 04-rbac-organizations.sql  # RBAC, organizations, RLS policies, auth hook
 │   ├── api/
 │   │   └── kong.yml                 # API gateway routes
 │   └── logs/
@@ -114,10 +136,16 @@ psql "postgresql://supabase_admin:PASSWORD@38.180.242.174:5433/postgres"
 # Via Supavisor transaction pooling (port 6543)
 psql "postgresql://supabase_admin:PASSWORD@38.180.242.174:6543/postgres"
 
-# REST API (from anywhere, requires API key)
+# REST API (requires authenticated JWT — anon access revoked on user-data tables)
 curl https://supabase.gerege.mn/rest/v1/users \
   -H "apikey: YOUR_ANON_KEY" \
-  -H "Authorization: Bearer YOUR_ANON_KEY"
+  -H "Authorization: Bearer USER_JWT"
+
+# REST API for gesign/eid schemas (use Accept-Profile header)
+curl https://supabase.gerege.mn/rest/v1/certificates \
+  -H "apikey: YOUR_ANON_KEY" \
+  -H "Authorization: Bearer USER_JWT" \
+  -H "Accept-Profile: gesign"
 
 # Auth health check
 curl https://supabase.gerege.mn/auth/v1/health \
@@ -153,6 +181,7 @@ ufw allow from NEW_IP to any port 6543 proto tcp
 - Database ports firewalled — only `ALLOWED_DB_IPS` can connect
 - SSL via Let's Encrypt with auto-renewal (certbot timer)
 - TLS 1.2+ with HSTS at Nginx
-- Row Level Security (RLS) on all custom tables
+- Row Level Security (RLS) on all custom tables with org-scoped RBAC policies
+- Auth hook auto-provisions users with role/org assignment on signup
 - TOTP secrets encrypted with AES-256-GCM
 - Recovery codes stored as SHA-256 hashes
