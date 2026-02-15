@@ -1,0 +1,29 @@
+# Environment secrets
+.env
+.env.local
+.env.*.local
+
+# Docker volumes data
+volumes/db/data/
+volumes/storage/
+
+# Docker
+docker-compose.override.yml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Backup files
+*.bak
+*.backup
