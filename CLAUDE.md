@@ -159,7 +159,7 @@ ufw allow from NEW_IP to any port 6543 proto tcp comment 'Supavisor transaction'
 - TLS 1.2+ with HSTS enabled
 - TOTP secrets encrypted with AES-256-GCM at application level
 - Recovery codes stored as SHA-256 hashes
-- Row Level Security (RLS) enabled on all custom tables with org-scoped RBAC policies
+- Row Level Security (RLS) with 45 policies across 9 tables — exactly 1 per (table, role, action) to avoid `multiple_permissive_policies` performance warnings. Each table has 5 policies: SELECT, INSERT, UPDATE, DELETE for `authenticated` + ALL for `service_role`
 - Auth hook auto-provisions users with role/org assignment on signup
 
 ## Key Files
@@ -172,20 +172,72 @@ ufw allow from NEW_IP to any port 6543 proto tcp comment 'Supavisor transaction'
 - `volumes/db/init/02-gesign-schema.sql` — Digital signature tables
 - `volumes/db/init/03-eid-schema.sql` — Electronic identity tables
 - `volumes/db/init/04-rbac-organizations.sql` — RBAC enum, organizations, role migration, RLS policies, auth hook
+- `volumes/db/init/05-auth-indexes.sql` — Missing indexes on auth schema foreign keys (run after GoTrue creates tables)
 - `volumes/api/kong.yml` — API gateway route definitions
 - `scripts/` — Server setup, deployment, and monitoring scripts
+
+## Supavisor Connection Pooling
+
+Supavisor manages connection pooling for all external database connections. Tenants and users are registered via the Supavisor API (port 4000 internal).
+
+### Tenant: `default`
+
+| User | Mode | Pool Size | Purpose |
+|------|------|-----------|---------|
+| `supabase_admin` | session | 15 | Manager — internal Supabase services |
+| `grgdev` | session | 15 | elite-gerege SSO, Sign, eID services |
+| `gepay_admin` | session | 15 | Gerege Pay service |
+
+### Connection Format
+
+External clients connect via Supavisor using `username.tenant_id` format:
+
+```bash
+# Via Supavisor session pooling (port 5432, RECOMMENDED)
+psql "postgresql://grgdev.default:PASSWORD@38.180.242.174:5432/postgres"
+
+# Via Supavisor transaction pooling (port 6543)
+psql "postgresql://grgdev.default:PASSWORD@38.180.242.174:6543/postgres"
+
+# Direct PostgreSQL (port 5433, for migrations/debug only)
+psql "postgresql://supabase_admin:PASSWORD@38.180.242.174:5433/postgres"
+```
+
+### Managing Tenants
+
+```bash
+# Generate a JWT for the Supavisor API (valid 1 hour)
+JWT=$(docker exec supabase-db psql -U supabase_admin -d postgres -tAc "
+  SELECT extensions.sign(
+    json_build_object('role','supabase_admin','iss','supabase',
+      'iat',extract(epoch from now())::int,
+      'exp',extract(epoch from now()+interval '1 hour')::int)::json,
+    'JWT_SECRET_HERE');")
+
+# List tenant
+docker exec supabase-supavisor curl -s http://localhost:4000/api/tenants/default \
+  -H "Authorization: Bearer $JWT"
+
+# Add a new user to the tenant (PUT replaces all users — include existing ones)
+docker exec supabase-supavisor curl -s -X PUT http://localhost:4000/api/tenants/default \
+  -H "Authorization: Bearer $JWT" \
+  -H "Content-Type: application/json" \
+  -d '{"tenant":{...existing config..., "users":[...existing + new user...]}}'
+```
+
+**Note:** Supavisor migrations must be run once after fresh deploy:
+```bash
+docker exec supabase-supavisor /app/bin/supavisor eval 'Supavisor.Release.migrate()'
+```
 
 ## Connecting from Other Services
 
 ```bash
-# Direct PostgreSQL connection (from allowed IPs only, port 5433)
+# Via Supavisor session pooling (RECOMMENDED for all app connections)
+psql "postgresql://grgdev.default:PASSWORD@38.180.242.174:5432/postgres"
+
+# Direct PostgreSQL (for migrations/debug only, port 5433)
 psql "postgresql://supabase_admin:PASSWORD@38.180.242.174:5433/postgres"
-
-# From elite-gerege (38.180.251.84):
-PGPASSWORD=PASSWORD psql -h 38.180.242.174 -p 5433 -U supabase_admin -d postgres
-
-# Via Supavisor transaction pooling (port 6543)
-psql "postgresql://supabase_admin:PASSWORD@38.180.242.174:6543/postgres"
 
 # REST API (requires authenticated JWT — anon access revoked on user-data tables)
 curl https://supabase.gerege.mn/rest/v1/users \

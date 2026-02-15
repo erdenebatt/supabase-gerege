@@ -101,7 +101,8 @@ supabase-gerege/
 │   │       ├── 01-public-schema.sql # Users + MFA tables
 │   │       ├── 02-gesign-schema.sql # Digital signature tables
 │   │       ├── 03-eid-schema.sql    # eID verification tables
-│   │       └── 04-rbac-organizations.sql  # RBAC, organizations, RLS policies, auth hook
+│   │       ├── 04-rbac-organizations.sql  # RBAC, organizations, RLS policies, auth hook
+│   │       └── 05-auth-indexes.sql       # Auth schema FK indexes
 │   ├── api/
 │   │   └── kong.yml                 # API gateway routes
 │   └── logs/
@@ -127,14 +128,32 @@ supabase-gerege/
 | Meta / Vector / Imgproxy | 256MB each | 128MB each |
 | **Total** | **~14GB** | **~9.5GB** |
 
+## Supavisor Connection Pooling
+
+All external database connections go through Supavisor (port 5432). Username format: `username.tenant_id`.
+
+| User | Purpose |
+|------|---------|
+| `supabase_admin.default` | Internal Supabase services (manager) |
+| `grgdev.default` | elite-gerege SSO, Sign, eID |
+| `gepay_admin.default` | Gerege Pay |
+
+After fresh deploy, run Supavisor migrations once:
+```bash
+docker exec supabase-supavisor /app/bin/supavisor eval 'Supavisor.Release.migrate()'
+```
+
 ## Connecting
 
 ```bash
-# Direct PostgreSQL (from allowed IPs only, port 5433)
-psql "postgresql://supabase_admin:PASSWORD@38.180.242.174:5433/postgres"
+# Via Supavisor session pooling (RECOMMENDED for all app connections)
+psql "postgresql://grgdev.default:PASSWORD@38.180.242.174:5432/postgres"
 
-# Via Supavisor transaction pooling (port 6543)
-psql "postgresql://supabase_admin:PASSWORD@38.180.242.174:6543/postgres"
+# Via Supavisor transaction pooling (for serverless/short queries)
+psql "postgresql://grgdev.default:PASSWORD@38.180.242.174:6543/postgres"
+
+# Direct PostgreSQL (for migrations/debug only, port 5433)
+psql "postgresql://supabase_admin:PASSWORD@38.180.242.174:5433/postgres"
 
 # REST API (requires authenticated JWT — anon access revoked on user-data tables)
 curl https://supabase.gerege.mn/rest/v1/users \
@@ -181,7 +200,7 @@ ufw allow from NEW_IP to any port 6543 proto tcp
 - Database ports firewalled — only `ALLOWED_DB_IPS` can connect
 - SSL via Let's Encrypt with auto-renewal (certbot timer)
 - TLS 1.2+ with HSTS at Nginx
-- Row Level Security (RLS) on all custom tables with org-scoped RBAC policies
+- Row Level Security (RLS) with 45 policies across 9 tables — exactly 1 per (table, role, action) to avoid `multiple_permissive_policies` performance warnings
 - Auth hook auto-provisions users with role/org assignment on signup
 - TOTP secrets encrypted with AES-256-GCM
 - Recovery codes stored as SHA-256 hashes
