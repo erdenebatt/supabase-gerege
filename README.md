@@ -13,15 +13,17 @@ Dedicated Supabase database server for the **Gerege AI Ecosystem** — the "Spin
 ```
 Internet
     |
-    +-- HTTPS --> Nginx (SSL) --> Kong API Gateway
-    |                               |-- /auth/v1/*     --> GoTrue (Auth)
-    |                               |-- /rest/v1/*     --> PostgREST (REST API)
-    |                               |-- /realtime/v1/* --> Realtime (WebSocket)
-    |                               |-- /storage/v1/*  --> Storage API
-    |                               +-- /*             --> Studio (Dashboard)
+    +-- HTTPS (443) --> Nginx (Let's Encrypt SSL) --> Kong API Gateway
+    |                                                   |-- /auth/v1/*     --> GoTrue (Auth)
+    |                                                   |-- /rest/v1/*     --> PostgREST (REST API)
+    |                                                   |-- /realtime/v1/* --> Realtime (WebSocket)
+    |                                                   |-- /storage/v1/*  --> Storage API
+    |                                                   +-- /*             --> Studio (Dashboard)
     |
-    +-- TCP 5432 --> Supavisor (Pooler) --> PostgreSQL 15
-        (firewalled)
+    +-- TCP 5433 --> PostgreSQL 15 (direct connection)
+    +-- TCP 5432 --> Supavisor (session mode) --> PostgreSQL 15
+    +-- TCP 6543 --> Supavisor (transaction mode) --> PostgreSQL 15
+        (all firewalled to ALLOWED_DB_IPS only)
 ```
 
 ## Database Schemas
@@ -106,33 +108,51 @@ supabase-gerege/
 ## Connecting
 
 ```bash
-# Direct PostgreSQL (from allowed IPs only)
-psql "postgresql://postgres:PASSWORD@supabase.gerege.mn:5432/postgres"
+# Direct PostgreSQL (from allowed IPs only, port 5433)
+psql "postgresql://supabase_admin:PASSWORD@38.180.242.174:5433/postgres"
 
-# Connection pooler (transaction mode)
-psql "postgresql://postgres:PASSWORD@supabase.gerege.mn:6543/postgres"
+# Via Supavisor transaction pooling (port 6543)
+psql "postgresql://supabase_admin:PASSWORD@38.180.242.174:6543/postgres"
 
-# REST API
+# REST API (from anywhere, requires API key)
 curl https://supabase.gerege.mn/rest/v1/users \
   -H "apikey: YOUR_ANON_KEY" \
   -H "Authorization: Bearer YOUR_ANON_KEY"
+
+# Auth health check
+curl https://supabase.gerege.mn/auth/v1/health \
+  -H "apikey: YOUR_ANON_KEY"
+```
+
+## Ports & Firewall
+
+UFW firewall configured by `scripts/firewall-setup.sh`. Default: deny all incoming.
+
+| Port | Service | Access |
+|------|---------|--------|
+| 22 | SSH | Public |
+| 80 | HTTP | Public (301 → HTTPS) |
+| 443 | HTTPS (Nginx) | Public — Let's Encrypt SSL |
+| 8000 | Kong API Gateway | Public (proxied via Nginx) |
+| 5433 | PostgreSQL direct | `ALLOWED_DB_IPS` only |
+| 5432 | Supavisor (session) | `ALLOWED_DB_IPS` only |
+| 6543 | Supavisor (transaction) | `ALLOWED_DB_IPS` only |
+
+To grant a new server access to PostgreSQL:
+```bash
+# Add to .env ALLOWED_DB_IPS, then:
+ufw allow from NEW_IP to any port 5433 proto tcp
+ufw allow from NEW_IP to any port 5432 proto tcp
+ufw allow from NEW_IP to any port 6543 proto tcp
 ```
 
 ## Security
 
 - JWT authentication on all API routes via Kong
-- PostgreSQL port firewalled to `ALLOWED_DB_IPS` only
+- Studio dashboard protected by basic auth (credentials in `.env`)
+- Database ports firewalled — only `ALLOWED_DB_IPS` can connect
+- SSL via Let's Encrypt with auto-renewal (certbot timer)
+- TLS 1.2+ with HSTS at Nginx
 - Row Level Security (RLS) on all custom tables
 - TOTP secrets encrypted with AES-256-GCM
 - Recovery codes stored as SHA-256 hashes
-- TLS 1.2+ with HSTS at Nginx
-
-## Ports
-
-| Port | Service | Access |
-|------|---------|--------|
-| 22 | SSH | Public |
-| 80/443 | HTTP/HTTPS (Nginx) | Public |
-| 8000 | Kong API Gateway | Public (via Nginx) |
-| 5432 | PostgreSQL | Firewalled |
-| 6543 | Supavisor | Firewalled |
