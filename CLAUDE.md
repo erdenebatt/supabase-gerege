@@ -30,11 +30,46 @@ Internet
 
 | Schema   | Purpose                          | Tables                                         |
 |----------|----------------------------------|-------------------------------------------------|
-| `public` | Core user management + MFA       | users, user_mfa_settings, user_totp, mfa_recovery_codes |
+| `public` | Core user management + MFA + RBAC | users, organizations, user_mfa_settings, user_totp, mfa_recovery_codes |
 | `gesign` | Digital signature service        | certificates, signing_logs                      |
 | `eid`    | Electronic identity verification | national_id_metadata, verification_logs         |
 | `auth`   | Supabase Auth (managed)          | users, sessions, mfa_factors, etc.              |
 | `storage`| Supabase Storage (managed)       | buckets, objects, etc.                          |
+
+## RBAC System
+
+Multi-tenant organization-based role hierarchy using a PostgreSQL enum:
+
+```
+CITIZEN < OPERATOR < ORG_ADMIN < SUPER_ADMIN
+```
+
+### Role Permissions
+
+| Resource | CITIZEN | OPERATOR | ORG_ADMIN | SUPER_ADMIN |
+|----------|---------|----------|-----------|-------------|
+| **users** (own) | SELECT, UPDATE | SELECT, UPDATE | SELECT, UPDATE | SELECT, UPDATE |
+| **users** (same org) | -- | -- | SELECT, UPDATE | ALL |
+| **users** (all) | -- | -- | -- | ALL |
+| **organizations** | SELECT | SELECT | SELECT | ALL |
+| **MFA tables** (own) | ALL | ALL | ALL | ALL |
+| **MFA tables** (others) | -- | -- | -- | SELECT |
+| **certificates/signing_logs** (own) | SELECT | SELECT | SELECT | SELECT |
+| **certificates/signing_logs** (org) | -- | SELECT | SELECT | ALL |
+| **national_id/verification_logs** (own) | SELECT | SELECT | SELECT | SELECT |
+| **national_id/verification_logs** (org) | -- | SELECT, UPDATE/INSERT | SELECT, UPDATE/INSERT | ALL |
+
+### Key Details
+
+- **Enum type**: `public.user_role` — enforced at DB level, supports `>=` comparisons for hierarchy
+- **Organizations table**: `public.organizations` with `domain` for auto-assignment on signup
+- **`users.org_id`**: Nullable FK to `organizations` — unaffiliated users have `NULL`
+- **`users.role`**: `user_role` enum (was VARCHAR), defaults to `CITIZEN`
+- **`current_user_info()`**: `SECURITY DEFINER` helper that returns `(user_id, org_id, role)` — used by all RLS policies to avoid infinite recursion
+- **Auth hook**: Trigger `on_auth_user_created` on `auth.users` auto-provisions `public.users` rows:
+  - `@gerege.mn` emails → `SUPER_ADMIN` role + Gerege org
+  - Other emails → `CITIZEN` role + org matched by domain (if exists)
+- **Anon access**: Revoked on all user-data tables — authenticated-only
 
 ## Resource Allocation (16GB Server)
 
@@ -124,14 +159,19 @@ ufw allow from NEW_IP to any port 6543 proto tcp comment 'Supavisor transaction'
 - TLS 1.2+ with HSTS enabled
 - TOTP secrets encrypted with AES-256-GCM at application level
 - Recovery codes stored as SHA-256 hashes
-- Row Level Security (RLS) enabled on all custom tables
+- Row Level Security (RLS) enabled on all custom tables with org-scoped RBAC policies
+- Auth hook auto-provisions users with role/org assignment on signup
 
 ## Key Files
 
 - `docker-compose.yml` — All service definitions with resource limits
 - `.env` — Secrets and configuration (never commit)
 - `volumes/db/postgresql.conf` — PostgreSQL tuning for 8GB allocation
-- `volumes/db/init/*.sql` — Schema initialization (runs on first start)
+- `volumes/db/init/00-extensions.sql` — Extensions and schema creation
+- `volumes/db/init/01-public-schema.sql` — Users, MFA tables, base grants
+- `volumes/db/init/02-gesign-schema.sql` — Digital signature tables
+- `volumes/db/init/03-eid-schema.sql` — Electronic identity tables
+- `volumes/db/init/04-rbac-organizations.sql` — RBAC enum, organizations, role migration, RLS policies, auth hook
 - `volumes/api/kong.yml` — API gateway route definitions
 - `scripts/` — Server setup, deployment, and monitoring scripts
 
@@ -147,10 +187,16 @@ PGPASSWORD=PASSWORD psql -h 38.180.242.174 -p 5433 -U supabase_admin -d postgres
 # Via Supavisor transaction pooling (port 6543)
 psql "postgresql://supabase_admin:PASSWORD@38.180.242.174:6543/postgres"
 
-# REST API (from anywhere, requires API key)
+# REST API (requires authenticated JWT — anon access revoked on user-data tables)
 curl https://supabase.gerege.mn/rest/v1/users \
   -H "apikey: ANON_KEY" \
-  -H "Authorization: Bearer ANON_KEY"
+  -H "Authorization: Bearer USER_JWT"
+
+# REST API for gesign/eid schemas (use Accept-Profile header)
+curl https://supabase.gerege.mn/rest/v1/certificates \
+  -H "apikey: ANON_KEY" \
+  -H "Authorization: Bearer USER_JWT" \
+  -H "Accept-Profile: gesign"
 
 # Auth API
 curl https://supabase.gerege.mn/auth/v1/health \
