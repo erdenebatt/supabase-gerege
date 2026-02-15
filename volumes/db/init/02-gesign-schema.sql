@@ -126,8 +126,8 @@ CREATE POLICY "Service role has full access to signing logs"
 
 
 -- ─── Grants ──────────────────────────────────────────────────
-GRANT SELECT ON gesign.certificates TO authenticated;
+GRANT SELECT ON gesign.certificates TO anon, authenticated;
 GRANT ALL ON gesign.certificates TO service_role;
 
-GRANT SELECT ON gesign.signing_logs TO authenticated;
+GRANT SELECT ON gesign.signing_logs TO anon, authenticated;
 GRANT ALL ON gesign.signing_logs TO service_role;

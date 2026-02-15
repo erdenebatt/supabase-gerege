@@ -20,5 +20,5 @@ CREATE SCHEMA IF NOT EXISTS gesign;
 CREATE SCHEMA IF NOT EXISTS eid;
 
 -- Grant usage on schemas to Supabase roles
-GRANT USAGE ON SCHEMA gesign TO authenticated, service_role;
-GRANT USAGE ON SCHEMA eid TO authenticated, service_role;
+GRANT USAGE ON SCHEMA gesign TO anon, authenticated, service_role;
+GRANT USAGE ON SCHEMA eid TO anon, authenticated, service_role;

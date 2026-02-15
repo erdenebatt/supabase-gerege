@@ -142,8 +142,8 @@ CREATE POLICY "Service role has full access to verification logs"
 
 
 -- ─── Grants ──────────────────────────────────────────────────
-GRANT SELECT ON eid.national_id_metadata TO authenticated;
+GRANT SELECT ON eid.national_id_metadata TO anon, authenticated;
 GRANT ALL ON eid.national_id_metadata TO service_role;
 
-GRANT SELECT ON eid.verification_logs TO authenticated;
+GRANT SELECT ON eid.verification_logs TO anon, authenticated;
 GRANT ALL ON eid.verification_logs TO service_role;
